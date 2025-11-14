@@ -167,11 +167,6 @@ mod test {
             {"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}
         "#;
         let msg: ClientMessage = serde_json::from_str(message).unwrap();
-        assert!(matches!(
-            msg,
-            ClientMessage::Subscribe {
-                subscription: Subscription::UserFills { .. },
-            }
-        ));
+        assert!(matches!(msg, ClientMessage::Subscribe { subscription: Subscription::UserFills { .. } }));
     }
 }

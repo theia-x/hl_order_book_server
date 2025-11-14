@@ -1,9 +1,11 @@
 #![allow(unused_crate_dependencies)]
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use clap::{Parser, ValueEnum};
 use futures_util::{SinkExt, StreamExt};
+use serde::{Deserialize, Serialize};
 use server::Result;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Subscription {
@@ -28,7 +30,6 @@ struct Args {
     #[arg(long, value_enum, default_value_t = Subscription::L2Book)]
     subscription: Subscription,
 }
-
 
 #[derive(Debug, Deserialize)]
 struct FillsResponse {
@@ -89,15 +90,18 @@ async fn main() -> Result<()> {
     while let Some(msg) = read.next().await {
         match msg {
             Ok(Message::Text(txt)) => {
+                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+
                 match serde_json::from_str::<FillsResponse>(&txt) {
                     Ok(response) => {
                         for fill in response.data {
-                            println!("Received fill: {fill:?}");
+                            let latency = now - fill.time;
+                            println!("Received fill: {fill:?}, time: {latency}");
                         }
-                    },
+                    }
                     Err(err) => println!("Error parsing response: {err}"),
                 }
-            },
+            }
             Ok(Message::Binary(bin)) => println!("Received binary: {bin:?}"),
             Ok(Message::Ping(_)) => println!("Received ping"),
             Ok(Message::Pong(_)) => println!("Received pong"),

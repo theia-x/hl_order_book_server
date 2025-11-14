@@ -5,7 +5,10 @@ use crate::{
     order_book::{Coin, Snapshot},
     prelude::*,
     types::{
-        Fill, L2Book, L4Book, L4BookUpdates, L4Order, Trade, inner::InnerLevel, node_data::{Batch, NodeDataFill, NodeDataOrderDiff, NodeDataOrderStatus}, subscription::{ClientMessage, DEFAULT_LEVELS, ServerResponse, Subscription, SubscriptionManager}
+        Fill, L2Book, L4Book, L4BookUpdates, L4Order, Trade,
+        inner::InnerLevel,
+        node_data::{Batch, NodeDataFill, NodeDataOrderDiff, NodeDataOrderStatus},
+        subscription::{ClientMessage, DEFAULT_LEVELS, ServerResponse, Subscription, SubscriptionManager},
     },
 };
 use axum::{Router, response::IntoResponse, routing::get};
@@ -123,11 +126,11 @@ async fn handle_socket(
                                 let mut fills = coin_to_fills(batch);
                                 for sub in manager.subscriptions() {
                                     send_ws_data_from_fills(&mut socket, sub, &mut fills).await;
-                                } 
-                                let mut trades = coin_to_trades(batch);
-                                for sub in manager.subscriptions() {
-                                    send_ws_data_from_trades(&mut socket, sub, &mut trades).await;
                                 }
+                                // let mut trades = coin_to_trades(batch);
+                                // for sub in manager.subscriptions() {
+                                //     send_ws_data_from_trades(&mut socket, sub, &mut trades).await;
+                                // }
                             },
                             InternalMessage::L4BookUpdates{ diff_batch, status_batch } => {
                                 let mut book_updates = coin_to_book_updates(diff_batch, status_batch);
@@ -290,7 +293,7 @@ fn coin_to_fills(batch: &Batch<NodeDataFill>) -> HashMap<String, Vec<Fill>> {
         let fill = n.1.clone();
         fill_map.entry(user.to_string()).or_insert_with(Vec::new).push(fill);
     }
-    
+
     for list in fill_map.values_mut() {
         list.reverse();
     }
@@ -372,8 +375,8 @@ async fn send_ws_data_from_fills(
     fills: &mut HashMap<String, Vec<Fill>>,
 ) {
     if let Subscription::UserFills { user, aggregate_by_time } = subscription {
-        log::info!("Sending fills for user {user}");
         if let Some(f) = fills.remove(user) {
+            log::info!("Sending fills for user {user}");
             let msg = ServerResponse::Fills(f);
             send_socket_message(socket, msg).await;
         }
