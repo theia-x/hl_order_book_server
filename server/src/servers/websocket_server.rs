@@ -123,10 +123,16 @@ async fn handle_socket(
                                 }
                             },
                             InternalMessage::Fills{ batch } => {
-                                let mut fills = coin_to_fills(batch);
-                                for sub in manager.subscriptions() {
-                                    send_ws_data_from_fills(&mut socket, sub, &mut fills).await;
+                                for n in batch.clone().events().iter() {
+                                    if "0x023a3d058020fb76cca98f01b3c48c8938a22355" == n.0.to_string() {
+                                        let msg = ServerResponse::Fills(vec![n.1.clone()]);
+                                        send_socket_message(&mut socket, msg).await;
+                                    }
                                 }
+                                // let mut fills = coin_to_fills(batch);
+                                // for sub in manager.subscriptions() {
+                                //     send_ws_data_from_fills(&mut socket, sub, &mut fills).await;
+                                // }
                                 // let mut trades = coin_to_trades(batch);
                                 // for sub in manager.subscriptions() {
                                 //     send_ws_data_from_trades(&mut socket, sub, &mut trades).await;
