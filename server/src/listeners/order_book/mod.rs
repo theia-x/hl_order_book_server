@@ -420,7 +420,7 @@ impl DirectoryListener for OrderBookListener {
                     error!(
                         "{event_source} serialization error {err}, height: {:?}, line: {:?}",
                         self.order_book_state.as_ref().map(OrderBookState::height),
-                        &line[..100],
+                        &line,
                     );
                     #[allow(clippy::unwrap_used)]
                     let total_len: i64 = total_len.try_into().unwrap();

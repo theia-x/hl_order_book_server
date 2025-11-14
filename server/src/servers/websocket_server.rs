@@ -123,6 +123,7 @@ async fn handle_socket(
                                 }
                             },
                             InternalMessage::Fills{ batch } => {
+                                println!("Fills: {batch:?}");
                                 let mut fills = coin_to_fills(batch);
                                 for sub in manager.subscriptions() {
                                     send_ws_data_from_fills(&mut socket, sub, &mut fills).await;

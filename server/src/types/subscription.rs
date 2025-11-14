@@ -116,7 +116,10 @@ impl SubscriptionManager {
 
 #[cfg(test)]
 mod test {
-    use crate::types::subscription::Subscription;
+    use crate::types::{
+        node_data::{Batch, NodeDataFill},
+        subscription::Subscription,
+    };
 
     use super::{ClientMessage, ServerResponse};
 
@@ -159,6 +162,15 @@ mod test {
                 subscription: Subscription::L2Book { n_sig_figs: None, n_levels: None, mantissa: None, .. },
             }
         ));
+    }
+
+    #[test]
+    fn test_message_deserialization_streaming_fills() {
+        let message = r#"
+            {"local_time":"2025-11-14T09:42:09.637764107","block_time":"2025-11-14T09:42:09.428915349","block_number":796195297,"events":[["0x1c1c270b573d55b68b3d14722b5d5d401511bed0",{"coin":"POPCAT","px":"0.11237","sz":"890.0","side":"B","time":1763113329428,"startPosition":"-2819.0","dir":"Close Short","closedPnl":"-0.19313","hash":"0x15ed06d0a4c55d891766042f74f9e10202df00b63fc87c5bb9b5b22363c93773","oid":234659509143,"crossed":false,"fee":"-0.001","tid":529241312998160,"cloid":"0x0e9b78569a4ef509249dbf05366a7a95","feeToken":"USDC","twapId":null}]]}
+        "#;
+        let msg: Batch<NodeDataFill> = serde_json::from_str(message).unwrap();
+        // assert!(matches!(msg, Batch::<NodeDataFill> { events: [NodeDataFill(_, _)], .. }));
     }
 
     #[test]
