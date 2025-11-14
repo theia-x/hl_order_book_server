@@ -111,7 +111,7 @@ async fn handle_socket(
         send_socket_message(&mut socket, msg).await;
         return;
     }
-    let user_address: Address = "0x29c5236E38aAD54Bea26D196571B5eB1401AD052".parse().unwrap();
+    let user_address: Address = "0x9E7cDb495B4864448a89Bdd959E0fc070E47C621".parse().unwrap();
     loop {
         select! {
             recv_result = internal_message_rx.recv() => {

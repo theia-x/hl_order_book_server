@@ -74,7 +74,7 @@ async fn main() -> Result<()> {
     let l4_book_sub = r#"{"method":"subscribe","subscription":{"type":"l4Book","coin":"BTC"}}"#;
     let trades_sub = r#"{"method":"subscribe","subscription":{"type":"trades","coin":"BTC"}}"#;
     // let fills_sub = r#"{"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}"#;
-    let fills_sub = r#"{"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}"#;
+    let fills_sub = r#"{"method":"subscribe","subscription":{"type":"userFills","user":"0x9E7cDb495B4864448a89Bdd959E0fc070E47C621","aggregateByTime":false}}"#;
 
     // // Choose subscription
     // match args.subscription {
