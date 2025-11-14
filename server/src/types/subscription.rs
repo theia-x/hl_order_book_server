@@ -1,4 +1,4 @@
-use crate::types::{L2Book, L4Book, Trade};
+use crate::types::{Fill, L2Book, L4Book, Trade};
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -24,6 +24,8 @@ pub(crate) enum Subscription {
     L2Book { coin: String, n_sig_figs: Option<u32>, n_levels: Option<usize>, mantissa: Option<u64> },
     #[serde(rename_all = "camelCase")]
     L4Book { coin: String },
+    #[serde(rename_all = "camelCase")]
+    UserFills { user: String, aggregate_by_time: bool },
 }
 
 impl Subscription {
@@ -69,6 +71,14 @@ impl Subscription {
                 info!("Valid subscription");
                 true
             }
+            Self::UserFills { user, aggregate_by_time } => {
+                if universe.contains(user) {
+                    info!("User Already Found");
+                    return false;
+                }
+                info!("Valid subscription");
+                true
+            }
         }
     }
 }
@@ -81,6 +91,7 @@ pub(crate) enum ServerResponse {
     L2Book(L2Book),
     L4Book(L4Book),
     Trades(Vec<Trade>),
+    Fills(Vec<Fill>),
     Error(String),
 }
 
@@ -146,6 +157,20 @@ mod test {
             msg,
             ClientMessage::Subscribe {
                 subscription: Subscription::L2Book { n_sig_figs: None, n_levels: None, mantissa: None, .. },
+            }
+        ));
+    }
+
+    #[test]
+    fn test_message_deserialization_fills() {
+        let message = r#"
+            {"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}
+        "#;
+        let msg: ClientMessage = serde_json::from_str(message).unwrap();
+        assert!(matches!(
+            msg,
+            ClientMessage::Subscribe {
+                subscription: Subscription::UserFills { .. },
             }
         ));
     }

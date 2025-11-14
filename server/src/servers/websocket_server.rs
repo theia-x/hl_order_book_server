@@ -5,10 +5,7 @@ use crate::{
     order_book::{Coin, Snapshot},
     prelude::*,
     types::{
-        L2Book, L4Book, L4BookUpdates, L4Order, Trade,
-        inner::InnerLevel,
-        node_data::{Batch, NodeDataFill, NodeDataOrderDiff, NodeDataOrderStatus},
-        subscription::{ClientMessage, DEFAULT_LEVELS, ServerResponse, Subscription, SubscriptionManager},
+        Fill, L2Book, L4Book, L4BookUpdates, L4Order, Trade, inner::InnerLevel, node_data::{Batch, NodeDataFill, NodeDataOrderDiff, NodeDataOrderStatus}, subscription::{ClientMessage, DEFAULT_LEVELS, ServerResponse, Subscription, SubscriptionManager}
     },
 };
 use axum::{Router, response::IntoResponse, routing::get};
@@ -123,6 +120,10 @@ async fn handle_socket(
                                 }
                             },
                             InternalMessage::Fills{ batch } => {
+                                let mut fills = coin_to_fills(batch);
+                                for sub in manager.subscriptions() {
+                                    send_ws_data_from_fills(&mut socket, sub, &mut fills).await;
+                                } 
                                 let mut trades = coin_to_trades(batch);
                                 for sub in manager.subscriptions() {
                                     send_ws_data_from_trades(&mut socket, sub, &mut trades).await;
@@ -275,6 +276,22 @@ async fn send_ws_data_from_snapshot(
     }
 }
 
+fn coin_to_fills(batch: &Batch<NodeDataFill>) -> HashMap<String, Vec<Fill>> {
+    let node_fills = batch.clone().events();
+    let mut fill_map = HashMap::new();
+
+    for n in node_fills.iter() {
+        let user = n.0.clone();
+        let fill = n.1.clone();
+        fill_map.entry(user.to_string()).or_insert_with(Vec::new).push(fill);
+    }
+    
+    for list in fill_map.values_mut() {
+        list.reverse();
+    }
+    fill_map
+}
+
 fn coin_to_trades(batch: &Batch<NodeDataFill>) -> HashMap<String, Vec<Trade>> {
     let mut fills = batch.clone().events();
     let mut trades = HashMap::new();
@@ -339,6 +356,19 @@ async fn send_ws_data_from_trades(
     if let Subscription::Trades { coin } = subscription {
         if let Some(trades) = trades.remove(coin) {
             let msg = ServerResponse::Trades(trades);
+            send_socket_message(socket, msg).await;
+        }
+    }
+}
+
+async fn send_ws_data_from_fills(
+    socket: &mut WebSocket,
+    subscription: &Subscription,
+    fills: &mut HashMap<String, Vec<Fill>>,
+) {
+    if let Subscription::UserFills { user, aggregate_by_time } = subscription {
+        if let Some(f) = fills.remove(user) {
+            let msg = ServerResponse::Fills(f);
             send_socket_message(socket, msg).await;
         }
     }

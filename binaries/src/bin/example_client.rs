@@ -9,6 +9,7 @@ enum Subscription {
     L2Book,
     L4Book,
     Trades,
+    Fills,
 }
 
 #[derive(Debug, Parser)]
@@ -44,12 +45,15 @@ async fn main() -> Result<()> {
         r#"{"method":"subscribe","subscription":{"type":"l2Book","coin":"BTC","nSigFigs":5,"mantissa":5}}"#;
     let l4_book_sub = r#"{"method":"subscribe","subscription":{"type":"l4Book","coin":"BTC"}}"#;
     let trades_sub = r#"{"method":"subscribe","subscription":{"type":"trades","coin":"BTC"}}"#;
+    let fills_sub = r#"{"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}"#;
 
     // Choose subscription
     match args.subscription {
-        Subscription::L2Book => write.send(Message::Text(l2_book_sub.into())).await?,
-        Subscription::L4Book => write.send(Message::Text(l4_book_sub.into())).await?,
-        Subscription::Trades => write.send(Message::Text(trades_sub.into())).await?,
+        // Subscription::L2Book => write.send(Message::Text(l2_book_sub.into())).await?,
+        // Subscription::L4Book => write.send(Message::Text(l4_book_sub.into())).await?,
+        // Subscription::Trades => write.send(Message::Text(trades_sub.into())).await?,
+        Subscription::Fills => write.send(Message::Text(fills_sub.into())).await?,
+        _ => {}
     }
 
     let mut msg_cnt = 0;
