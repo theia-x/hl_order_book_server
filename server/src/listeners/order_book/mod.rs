@@ -40,11 +40,11 @@ mod utils;
 // WARNING - this code assumes no other file system operations are occurring in the watched directories
 // if there are scripts running, this may not work as intended
 pub(crate) async fn hl_listen(listener: Arc<Mutex<OrderBookListener>>, dir: PathBuf) -> Result<()> {
-    let order_statuses_dir = EventSource::OrderStatuses.event_source_dir(&dir).canonicalize()?;
+    // let order_statuses_dir = EventSource::OrderStatuses.event_source_dir(&dir).canonicalize()?;
     let fills_dir = EventSource::Fills.event_source_dir(&dir).canonicalize()?;
-    let order_diffs_dir = EventSource::OrderDiffs.event_source_dir(&dir).canonicalize()?;
-    info!("Monitoring order status directory: {}", order_statuses_dir.display());
-    info!("Monitoring order diffs directory: {}", order_diffs_dir.display());
+    // let order_diffs_dir = EventSource::OrderDiffs.event_source_dir(&dir).canonicalize()?;
+    // info!("Monitoring order status directory: {}", order_statuses_dir.display());
+    // info!("Monitoring order diffs directory: {}", order_diffs_dir.display());
     info!("Monitoring fills directory: {}", fills_dir.display());
 
     // monitoring the directory via the notify crate (gives file system events)
@@ -65,9 +65,9 @@ pub(crate) async fn hl_listen(listener: Arc<Mutex<OrderBookListener>>, dir: Path
     // Result is sent back along this channel (if error, we want to return to top level)
     let (snapshot_fetch_task_tx, mut snapshot_fetch_task_rx) = unbounded_channel::<Result<()>>();
 
-    watcher.watch(&order_statuses_dir, RecursiveMode::Recursive)?;
+    // watcher.watch(&order_statuses_dir, RecursiveMode::Recursive)?;
+    // watcher.watch(&order_diffs_dir, RecursiveMode::Recursive)?;
     watcher.watch(&fills_dir, RecursiveMode::Recursive)?;
-    watcher.watch(&order_diffs_dir, RecursiveMode::Recursive)?;
     let start = Instant::now() + Duration::from_secs(5);
     let mut ticker = interval_at(start, Duration::from_secs(10));
     loop {
@@ -76,25 +76,26 @@ pub(crate) async fn hl_listen(listener: Arc<Mutex<OrderBookListener>>, dir: Path
                 Some(Ok(event)) => {
                     if event.kind.is_create() || event.kind.is_modify() {
                         let new_path = &event.paths[0];
-                        if new_path.starts_with(&order_statuses_dir) && new_path.is_file() {
-                            listener
-                                .lock()
-                                .await
-                                .process_update(&event, new_path, EventSource::OrderStatuses)
-                                .map_err(|err| format!("Order status processing error: {err}"))?;
-                        } else if new_path.starts_with(&fills_dir) && new_path.is_file() {
+                        if new_path.starts_with(&fills_dir) && new_path.is_file() {
                             listener
                                 .lock()
                                 .await
                                 .process_update(&event, new_path, EventSource::Fills)
                                 .map_err(|err| format!("Fill update processing error: {err}"))?;
-                        } else if new_path.starts_with(&order_diffs_dir) && new_path.is_file() {
-                            listener
-                                .lock()
-                                .await
-                                .process_update(&event, new_path, EventSource::OrderDiffs)
-                                .map_err(|err| format!("Book diff processing error: {err}"))?;
                         }
+                        // if new_path.starts_with(&order_statuses_dir) && new_path.is_file() {
+                        //     listener
+                        //         .lock()
+                        //         .await
+                        //         .process_update(&event, new_path, EventSource::OrderStatuses)
+                        //         .map_err(|err| format!("Order status processing error: {err}"))?;
+                        // } else if new_path.starts_with(&order_diffs_dir) && new_path.is_file() {
+                        //     listener
+                        //         .lock()
+                        //         .await
+                        //         .process_update(&event, new_path, EventSource::OrderDiffs)
+                        //         .map_err(|err| format!("Book diff processing error: {err}"))?;
+                        // }
                     }
                 }
                 Some(Err(err)) => {

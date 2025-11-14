@@ -200,14 +200,12 @@ async fn receive_client_message(
         ClientMessage::Unsubscribe { subscription } | ClientMessage::Subscribe { subscription } => subscription.clone(),
     };
     // this is used for display purposes only, hence unwrap_or_default. It also shouldn't fail
-    log::info!("Subscription: {subscription:?}");
     let sub = serde_json::to_string(&subscription).unwrap_or_default();
     if !subscription.validate(universe) {
         let msg = ServerResponse::Error(format!("Invalid subscription: {sub}"));
         send_socket_message(socket, msg).await;
         return;
     }
-    log::info!("Valid subscription: {sub}");
     let (word, success) = match &client_message {
         ClientMessage::Subscribe { .. } => ("", manager.subscribe(subscription)),
         ClientMessage::Unsubscribe { .. } => ("un", manager.unsubscribe(subscription)),
