@@ -124,8 +124,9 @@ async fn handle_socket(
                             },
                             InternalMessage::Fills{ batch } => {
                                 for n in batch.clone().events().iter() {
-                                    if "0x023a3d058020fb76cca98f01b3c48c8938a22355" == n.0.to_string() {
+                                    if "0x023a3d058020fb76cca98f01b3c48c8938a22355" == n.0.to_string() {                                        
                                         let msg = ServerResponse::Fills(vec![n.1.clone()]);
+                                        println!("Fills: {:?}", msg);
                                         send_socket_message(&mut socket, msg).await;
                                     }
                                 }
