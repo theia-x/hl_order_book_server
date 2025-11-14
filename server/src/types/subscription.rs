@@ -86,7 +86,7 @@ impl Subscription {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "channel", content = "data")]
 #[serde(rename_all = "camelCase")]
-pub(crate) enum ServerResponse {
+pub enum ServerResponse {
     SubscriptionResponse(ClientMessage),
     L2Book(L2Book),
     L4Book(L4Book),

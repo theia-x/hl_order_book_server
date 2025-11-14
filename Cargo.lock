@@ -977,6 +977,8 @@ dependencies = [
  "clap",
  "env_logger",
  "futures-util",
+ "serde",
+ "serde_json",
  "server",
  "tokio",
  "tokio-tungstenite",

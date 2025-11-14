@@ -3,6 +3,7 @@ use clap::{Parser, ValueEnum};
 use futures_util::{SinkExt, StreamExt};
 use server::Result;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Subscription {
@@ -28,6 +29,32 @@ struct Args {
     subscription: Subscription,
 }
 
+
+#[derive(Debug, Deserialize)]
+struct FillsResponse {
+    channel: String,
+    data: Vec<Fill>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Fill {
+    coin: String,
+    px: String,
+    sz: String,
+    side: String,
+    time: u64,
+    startPosition: String,
+    dir: String,
+    closedPnl: String,
+    hash: String,
+    oid: u64,
+    crossed: bool,
+    fee: String,
+    tid: u64,
+    feeToken: String,
+    liquidation: Option<String>,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -47,19 +74,30 @@ async fn main() -> Result<()> {
     let trades_sub = r#"{"method":"subscribe","subscription":{"type":"trades","coin":"BTC"}}"#;
     let fills_sub = r#"{"method":"subscribe","subscription":{"type":"userFills","user":"0x023A3D058020fB76cCa98f01b3c48C8938A22355","aggregateByTime":false}}"#;
 
-    // Choose subscription
-    match args.subscription {
-        // Subscription::L2Book => write.send(Message::Text(l2_book_sub.into())).await?,
-        // Subscription::L4Book => write.send(Message::Text(l4_book_sub.into())).await?,
-        // Subscription::Trades => write.send(Message::Text(trades_sub.into())).await?,
-        Subscription::Fills => write.send(Message::Text(fills_sub.into())).await?,
-        _ => {}
-    }
+    // // Choose subscription
+    // match args.subscription {
+    //     Subscription::L2Book => write.send(Message::Text(l2_book_sub.into())).await?,
+    //     // Subscription::L4Book => write.send(Message::Text(l4_book_sub.into())).await?,
+    //     // Subscription::Trades => write.send(Message::Text(trades_sub.into())).await?,
+    //     Subscription::Fills => write.send(Message::Text(fills_sub.into())).await?,
+    //     _ => {}
+    // }
+
+    write.send(Message::Text(fills_sub.into())).await?;
 
     let mut msg_cnt = 0;
     while let Some(msg) = read.next().await {
         match msg {
-            Ok(Message::Text(txt)) => println!("Received text {msg_cnt}: {txt}"),
+            Ok(Message::Text(txt)) => {
+                match serde_json::from_str::<FillsResponse>(&txt) {
+                    Ok(response) => {
+                        for fill in response.data {
+                            println!("Received fill: {fill:?}");
+                        }
+                    },
+                    Err(err) => println!("Error parsing response: {err}"),
+                }
+            },
             Ok(Message::Binary(bin)) => println!("Received binary: {bin:?}"),
             Ok(Message::Ping(_)) => println!("Received ping"),
             Ok(Message::Pong(_)) => println!("Received pong"),
