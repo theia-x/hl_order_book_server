@@ -60,7 +60,8 @@ impl EventSource {
     #[must_use]
     pub(crate) fn event_source_dir(self, dir: &Path) -> PathBuf {
         match self {
-            Self::Fills => dir.join("hl/data/node_fills_by_block"),
+            // Self::Fills => dir.join("hl/data/node_fills_by_block"),
+            Self::Fills => dir.join("hl/data/node_fills_streaming"),
             Self::OrderStatuses => dir.join("hl/data/node_order_statuses_by_block"),
             Self::OrderDiffs => dir.join("hl/data/node_raw_book_diffs_by_block"),
         }
