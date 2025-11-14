@@ -173,7 +173,9 @@ async fn handle_socket(
                             info!("Client disconnected");
                             return;
                         }
-                        _ => {}
+                        _ => {
+                            info!("Client message: {:?}", frame.opcode);
+                        }
                     }
                 } else {
                     info!("Client connection closed");
