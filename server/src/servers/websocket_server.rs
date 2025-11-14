@@ -11,6 +11,7 @@ use crate::{
         subscription::{ClientMessage, DEFAULT_LEVELS, ServerResponse, Subscription, SubscriptionManager},
     },
 };
+use alloy::primitives::Address;
 use axum::{Router, response::IntoResponse, routing::get};
 use futures_util::{SinkExt, StreamExt};
 use log::{error, info};
@@ -110,6 +111,7 @@ async fn handle_socket(
         send_socket_message(&mut socket, msg).await;
         return;
     }
+    let user_address: Address = "0x023a3d058020fb76cca98f01b3c48c8938a22355".parse().unwrap();
     loop {
         select! {
             recv_result = internal_message_rx.recv() => {
@@ -123,8 +125,8 @@ async fn handle_socket(
                                 }
                             },
                             InternalMessage::Fills{ batch } => {
-                                for n in batch.clone().events().iter() {
-                                    if "0x023a3d058020fb76cca98f01b3c48c8938a22355" == n.0.to_string() {                                        
+                                for n in batch.clone().events().iter() {                                
+                                    if user_address == n.0 {                                        
                                         let msg = ServerResponse::Fills(vec![n.1.clone()]);
                                         println!("Fills: {:?}", msg);
                                         send_socket_message(&mut socket, msg).await;
