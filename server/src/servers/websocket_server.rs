@@ -158,6 +158,7 @@ async fn handle_socket(
                                 }
                             };
 
+                            println!("Client message: {text}");
                             info!("Client message: {text}");
 
                             if let Ok(value) = serde_json::from_str::<ClientMessage>(text) {
@@ -194,12 +195,14 @@ async fn receive_client_message(
         ClientMessage::Unsubscribe { subscription } | ClientMessage::Subscribe { subscription } => subscription.clone(),
     };
     // this is used for display purposes only, hence unwrap_or_default. It also shouldn't fail
+    log::info!("Subscription: {subscription:?}");
     let sub = serde_json::to_string(&subscription).unwrap_or_default();
     if !subscription.validate(universe) {
         let msg = ServerResponse::Error(format!("Invalid subscription: {sub}"));
         send_socket_message(socket, msg).await;
         return;
     }
+    log::info!("Valid subscription: {sub}");
     let (word, success) = match &client_message {
         ClientMessage::Subscribe { .. } => ("", manager.subscribe(subscription)),
         ClientMessage::Unsubscribe { .. } => ("un", manager.unsubscribe(subscription)),
@@ -367,6 +370,7 @@ async fn send_ws_data_from_fills(
     fills: &mut HashMap<String, Vec<Fill>>,
 ) {
     if let Subscription::UserFills { user, aggregate_by_time } = subscription {
+        log::info!("Sending fills for user {user}");
         if let Some(f) = fills.remove(user) {
             let msg = ServerResponse::Fills(f);
             send_socket_message(socket, msg).await;
